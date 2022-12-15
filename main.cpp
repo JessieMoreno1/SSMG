@@ -4,17 +4,23 @@
 #include "SFML/Graphics.hpp"
 #include "SFML/System.hpp"
 #include "MouseEvents.h"
+#include "MainMenu.h"
+
 int main() {
-    std::cout << "Hello, World!" << std::endl;
 
     sf::RectangleShape flashingSquare, squareOne, squareTwo, squareThree, squareFour;
+
+    // create a vector of the available colors
+    std::vector<sf::Color> availableColors = { sf::Color::Blue, sf::Color::Red, sf::Color::Yellow, sf::Color::Green};
 
     // create a vector to store the sequence of colors
     std::vector<sf::Color> colorSequence;
 
-    // create an array to store the player's input
-    sf::Color playerInput[100];
-    int inputIndex = 0;
+    // create a vector to store the player's input
+    std::vector<sf::Color> playerInput;
+
+    // create clock for delay purposes
+    sf::Clock clock;
 
     // create a variable that keeps track of the player's score
     int score = 0;
@@ -40,8 +46,12 @@ int main() {
 
     sf::RenderWindow window({1280, 720, 32}, "Simon Says Game");
 
+    MainMenu m(window);
+
+
     while (window.isOpen())
     {
+
         sf::Event event;
         while(window.pollEvent(event))
         {
@@ -50,119 +60,91 @@ int main() {
                 window.close();
             }
 
-    // 1. update the game state
 
-            // 1.1. update the game state
-            sf::Clock clock;
-            sf::Time getElapsedSeconds = clock.getElapsedTime();
-
-            // 1.2 Check if the player has entered the correct
-            // sequence of colors
-
-
-           bool correctSequence = true;
-           for (int i = 0; i < colorSequence.size(); i++)
-           {
-               // if the players input is not the same as the color
-               // sequence then the correct sequence boolean turns false
-               if (playerInput[i] != colorSequence[i])
-               {
-                   correctSequence = false;
-                   break;
-               }
-           }
-
-           // if the player has entered the correct sequence, update the score
-           if (correctSequence)
-           {
-               score++;
-               colorSequence.clear();
-           }
-
-
-
-    // 2. generate a new color for the sequence
-
-            // create a vector of the available colors
-            std::vector<sf::Color> availableColors = { sf::Color::Blue, sf::Color::Red, sf::Color::Yellow, sf::Color::Green};
-
-            // shuffle the colors in the vector
-            std::random_shuffle(availableColors.begin(), availableColors.end());
-
-             // add 4 colors to the colorSequence
-             for (int i = 0; i < 4; i++) {
-                 sf::Color newColor = availableColors.at(i);
-                 colorSequence.push_back(newColor);
-             }
-
-            // Play the sequence of colors
-           // for (const sf::Color& color : colorSequence)
-           // {
-           //      // flash the color on the screen
-           //      flashingSquare.setFillColor(color);
-           //      if (getElapsedSeconds.asSeconds() == 5000)
-           //      {
-           //          flashingSquare.setFillColor(sf::Color::White);
-           //      }
-           // }
             if (MouseEvents::isClick(squareOne, window))
             {
                 std::cout << "Blue square clicked\n";
-                playerInput[inputIndex++] == sf::Color::Blue;
+                playerInput.push_back(sf::Color::Blue);
+                // std::cout << playerInput.size() << std::endl;
             }
             if (MouseEvents::isClick(squareTwo, window))
             {
                 std::cout << "Red square clicked\n";
-                playerInput[inputIndex++] == sf::Color::Red;
+                playerInput.push_back(sf::Color::Red);
+                // std::cout << playerInput.size()<< std::endl;
+
             }
             if (MouseEvents::isClick(squareThree, window))
             {
                 std::cout << "Yellow square clicked\n";
-                playerInput[inputIndex++] == sf::Color::Yellow;
+                playerInput.push_back(sf::Color::Yellow);
+                // std::cout << playerInput.size()<< std::endl;
+
             }
             if (MouseEvents::isClick(squareFour, window))
             {
                 std::cout << "Green square clicked\n";
-                playerInput[inputIndex++] == sf::Color::Green;
+                playerInput.push_back(sf::Color::Green);
+                // std::cout << playerInput.size()<< std::endl;
+
             }
 
+            if (MouseEvents::isClick(m.getStartText(), window))
+            {
+                m.enableState(HIDDEN);
+            }
 
+        }
 
+        // shuffle the colors in the vector
+        std::random_shuffle(availableColors.begin(), availableColors.end());
+
+        if (colorSequence.size() <= 4)
+        {
+            // add 4 colors to the colorSequence
+            sf::Color newColor = availableColors.at(0);
+            colorSequence.push_back(newColor);
         }
 
         // Play the sequence of colors
         for (const sf::Color& color : colorSequence)
         {
-            // flash the color on the screen
-            flashingSquare.setFillColor(color);
-            sf::sleep(sf::milliseconds(30));
-            //flashingSquare.setFillColor(sf::Color::White);
-            //sf::sleep(sf::microseconds(100));
+            if (clock.getElapsedTime().asSeconds() >= .25f)
+            {
+                // flash the color on the screen
+                flashingSquare.setFillColor(color);
+                clock.restart();
+            }
         }
 
         // check the players input and compare it to the sequence
         bool correctSequence = true;
-        for (int i = 0; i < colorSequence.size(); i++)
-        {
-            // if the players input is not the same as the color
-            // sequence then the correct sequence boolean turns false
-            if (playerInput[i] != colorSequence[i])
-            {
-                correctSequence = false;
-                break;
+
+        if (playerInput.size() == colorSequence.size()) {
+            for (int i = 0; i < colorSequence.size(); i++) {
+                // if the players input is not the same as the color
+                // sequence then the correct sequence boolean turns false
+                if (playerInput[i] != colorSequence[i]) {
+                    std::cout << "Incorrect sequence\n";
+                    correctSequence = false;
+                    playerInput.clear();
+                    colorSequence.clear();
+                    break;
+                }
             }
+            // if the player has entered the correct sequence, update the score
+            if (correctSequence) {
+                std::cout << "Correct sequence found\n";
+                score++;
+                colorSequence.clear();
+                playerInput.clear();
+            }
+            std::cout << "\nScore: " << score << std::endl;
         }
-
-        // if the player has entered the correct sequence, update the score
-        if (correctSequence)
-        {
-            score++;
-            colorSequence.clear();
-        }
-
         // clear the window and draw the updated game state
 
         window.clear({58,64,90});
+        window.draw(m);
         window.draw(flashingSquare);
         window.draw(squareOne);
         window.draw(squareTwo);
